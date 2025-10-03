@@ -19,15 +19,22 @@ new class extends Component
     {
         try {
             $validated = $this->validate([
-                'current_password' => ['required', 'string', 'current_password'],
+                'current_password' => ['required', 'string'],
                 'password' => ['required', 'string', Password::defaults(), 'confirmed'],
             ]);
         } catch (ValidationException $e) {
             $this->reset('current_password', 'password', 'password_confirmation');
-
             throw $e;
         }
 
+        // 🔑 Manual check password lama
+        if (! Hash::check($this->current_password, Auth::user()->password)) {
+            throw ValidationException::withMessages([
+                'current_password' => __('Password lama tidak sesuai.'),
+            ]);
+        }
+
+        // ✅ Update password baru dengan bcrypt
         Auth::user()->update([
             'password' => Hash::make($validated['password']),
         ]);
